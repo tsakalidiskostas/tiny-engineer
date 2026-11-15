@@ -13,6 +13,10 @@ constexpr float READING_HEAD_BAND = 2.0f / 7.0f;
 constexpr float READING_NECK_SWAY = 2.0f / 9.0f;
 
 constexpr float TRANSITION_TORSO_SPEED_DEG_S = 25.0f;
+
+// Neck rest sits this far toward the robot's left of mid (higher angle);
+// exactly at mid this neck servo twitches back and forth.
+constexpr float NECK_REST_OFFSET_DEG = 3.0f;
 constexpr float TRANSITION_HAND_SPEED_DEG_S = 90.0f;
 
 constexpr float TYPING_RIGHT_LOW = -1.0f;

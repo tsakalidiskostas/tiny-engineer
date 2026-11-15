@@ -130,6 +130,8 @@ void stopAnimServos() {
 }
 
 void parkTorso(float speedDegS) {
+  const float neckRest = servoNormToDeg(SERVO_NECK, 0.0f) + NECK_REST_OFFSET_DEG;
+
   serialLogPrint("[anim] parkTorso body ");
   serialLogPrint(servoAt(SERVO_BODY).angle(), 1);
   serialLogPrint(" -> ");
@@ -137,12 +139,12 @@ void parkTorso(float speedDegS) {
   serialLogPrint(" neck ");
   serialLogPrint(servoAt(SERVO_NECK).angle(), 1);
   serialLogPrint(" -> ");
-  serialLogPrint(servoNormToDeg(SERVO_NECK, 0.0f), 1);
+  serialLogPrint(neckRest, 1);
   serialLogPrint(" speed=");
   serialLogPrintln(speedDegS, 1);
 
   servoAt(SERVO_BODY).setNormTarget(0.0f, speedDegS);
-  servoAt(SERVO_NECK).setNormTarget(0.0f, speedDegS);
+  servoAt(SERVO_NECK).setTarget(neckRest, speedDegS);
 }
 
 void parkHands(float speedDegS) {
