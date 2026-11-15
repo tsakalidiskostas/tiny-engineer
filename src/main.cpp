@@ -54,8 +54,10 @@ void setup() {
 
   serialLogPrintln();
   serialLogPrintln("Starting I2C");
-  serialLogPrintln("SDA = GP0");
-  serialLogPrintln("SCL = GP1");
+  serialLogPrint("SDA = GP");
+  serialLogPrintln(I2C_SDA);
+  serialLogPrint("SCL = GP");
+  serialLogPrintln(I2C_SCL);
 
   Wire.begin(
     I2C_SDA,

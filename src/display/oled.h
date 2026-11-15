@@ -34,6 +34,7 @@ void showTextThenIdle(const char* line1, const char* line2 = nullptr);
 void showIdleScreen();
 
 void initOled();
+void updateOledHealth(uint32_t nowMs);
 void runOledTest();
 
 void showServoProgress(
