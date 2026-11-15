@@ -295,6 +295,12 @@ export function ApiReference() {
           </tr>
           <tr>
             <td>
+              <code>hello_family</code>
+            </td>
+            <td>Two-hand hello + hello_family.wav (mod audio)</td>
+          </tr>
+          <tr>
+            <td>
               <code>wakeup</code>
             </td>
             <td>One-shot sleep-inertia wake</td>

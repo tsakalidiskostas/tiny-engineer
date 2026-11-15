@@ -311,6 +311,7 @@ void updateEyes(uint32_t now) {
 
   if (style->needsBlink &&
       g_eyeMode != EyeMode::Welcome &&
+      g_eyeMode != EyeMode::HelloFamily &&
       g_eyeMode != EyeMode::Wakeup &&
       g_eyeMode != EyeMode::Dead) {
     blinkAdvance(now);

@@ -111,6 +111,7 @@ void resolveAnimationTarget(AnimationId id, uint8_t& r, uint8_t& g, uint8_t& b) 
     case AnimationId::Thinking:
     case AnimationId::Talking:
     case AnimationId::Welcome:
+    case AnimationId::HelloFamily:
     case AnimationId::Ring:
     case AnimationId::Wakeup:
       r = RGB_ANIM_WHITE;

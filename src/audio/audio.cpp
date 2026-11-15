@@ -288,6 +288,14 @@ bool updateDeadPlayback() {
   return wavStreamUpdate();
 }
 
+bool startHelloFamilyPlayback() {
+  return wavStreamStart(WavClip::HelloFamily);
+}
+
+bool updateHelloFamilyPlayback() {
+  return wavStreamUpdate();
+}
+
 bool playBell() {
   return playWavBlocking(WavClip::Bell, "Playing...");
 }

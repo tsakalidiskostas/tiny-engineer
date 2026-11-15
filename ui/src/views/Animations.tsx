@@ -12,6 +12,7 @@ const ANIMATIONS = [
   ["talking", "Talking", "Continuous"],
   ["ring", "Bell", "One-shot"],
   ["welcome", "Welcome", "One-shot"],
+  ["hello_family", "Hello family", "One-shot + audio"],
   ["wakeup", "Wakeup", "Sleep inertia"],
   ["sleep", "Sleep", "Close + OLED off"],
   ["attention", "Attention", "+ audio, 1 min hold"],

@@ -38,4 +38,7 @@ bool startDeadPlayback();
 bool updateDeadPlayback();
 void stopDeadPlayback();
 bool playDead();
+
+bool startHelloFamilyPlayback();
+bool updateHelloFamilyPlayback();
 void runSoundTest();

@@ -116,6 +116,12 @@ class AudioPackTests(unittest.TestCase):
         with self.assertRaises(AudioPackError):
             pack_audio(self.assets, self.dest, 2_000_000, self.mod)
 
+    def test_optional_wav_is_packed_without_cue(self):
+        write_wav(self.mod / "hello_family.wav", 400)
+        pack_audio(self.assets, self.dest, 2_000_000, self.mod)
+        with wave.open(str(self.dest / "hello_family.wav"), "rb") as wav:
+            self.assertEqual(wav.getframerate(), 22050)
+
     def test_cue_without_wav_fails(self):
         (self.mod / "welcome.cue").write_text(welcome_cue(500))
         with self.assertRaises(AudioPackError):

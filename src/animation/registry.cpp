@@ -8,6 +8,7 @@
 #include "animation/attention.h"
 #include "animation/dead.h"
 #include "animation/error.h"
+#include "animation/hello_family.h"
 #include "animation/reading.h"
 #include "animation/ring.h"
 #include "animation/sleep_anim.h"
@@ -21,6 +22,7 @@
 #include "display/eyes/modes/attention.h"
 #include "display/eyes/modes/dead.h"
 #include "display/eyes/modes/error.h"
+#include "display/eyes/modes/hello_family.h"
 #include "display/eyes/modes/idle.h"
 #include "display/eyes/modes/reading.h"
 #include "display/eyes/modes/ring.h"
@@ -93,6 +95,10 @@ void startRingAt(uint32_t /*nowMs*/) {
 
 void startWelcomeAt(uint32_t /*nowMs*/) {
   startWelcome();
+}
+
+void startHelloFamilyAt(uint32_t /*nowMs*/) {
+  startHelloFamily();
 }
 
 void startAttentionAt(uint32_t /*nowMs*/) {
@@ -197,6 +203,17 @@ constexpr ModeEntry kModes[] = {
     updateWelcome,
     startWelcomeEyes,
     updateWelcomeEyes,
+  },
+  {
+    AnimationId::HelloFamily,
+    EyeMode::HelloFamily,
+    "hello_family",
+    false,
+    -1,
+    startHelloFamilyAt,
+    updateHelloFamily,
+    startHelloFamilyEyes,
+    updateHelloFamilyEyes,
   },
   {
     AnimationId::Attention,

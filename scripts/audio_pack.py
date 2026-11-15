@@ -19,6 +19,9 @@ STOCK_WAVS = (
     "dead.wav",
 )
 
+# Clips with no stock file. Only a mod ships them; firmware plays nothing when absent.
+OPTIONAL_WAVS = ("hello_family.wav",)
+
 # Phrase marks the firmware already uses. A replaced clip must ship every key.
 # blink_window is (start_key, end_key): the blink must sit inside that span.
 CUE_CLIPS = {
@@ -243,7 +246,7 @@ def spiffs_size_bytes(partitions_csv):
 
 
 def _managed_names():
-    names = list(STOCK_WAVS)
+    names = list(STOCK_WAVS) + list(OPTIONAL_WAVS)
     names.extend(f"{clip}.cue" for clip in CUE_CLIPS)
     return names
 
@@ -274,8 +277,9 @@ def pack_audio(assets_dir, dest_dir, partition_bytes, mod_dir=None):
     if mod_dir is not None:
         _overlay_mod(Path(mod_dir), dest_dir)
 
-    for name in STOCK_WAVS:
-        halve_sample_rate(dest_dir / name)
+    for name in STOCK_WAVS + OPTIONAL_WAVS:
+        if (dest_dir / name).is_file():
+            halve_sample_rate(dest_dir / name)
     print(f"Resampled WAVs to {PACKED_RATE} Hz")
 
     total = sum(
@@ -303,7 +307,7 @@ def _overlay_mod(mod_dir, dest_dir):
             continue
         suffix = path.suffix.lower()
         if suffix == ".wav":
-            if path.name not in STOCK_WAVS:
+            if path.name not in STOCK_WAVS + OPTIONAL_WAVS:
                 raise AudioPackError(f"Unknown audio file: {path.name}")
             wavs[path.stem] = path
         elif suffix == ".cue":

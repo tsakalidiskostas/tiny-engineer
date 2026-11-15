@@ -11,6 +11,7 @@ export const ANIM_NAMES = new Set([
   "error",
   "abort",
   "dead",
+  "hello_family",
   "wakeup",
   "sleep",
 ]);
