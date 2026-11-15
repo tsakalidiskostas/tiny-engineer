@@ -93,7 +93,7 @@ curl -X POST http://tiny-engineer.local/test/audio
 # OLED title / HELLO / X in a box
 curl -X POST http://tiny-engineer.local/test/screen
 
-# Servos mid → +0.5 → −0.5 → mid of saved range (channels 0–4)
+# Servos mid → +0.5 → −0.5 → mid of saved range (channels 11–15)
 curl -X POST http://tiny-engineer.local/test/movement
 
 # Onboard WS2812 R → G → B → white → off, then back to current animation LED
@@ -141,7 +141,7 @@ HTTP runs on STA when connected, or on setup AP at `192.168.4.1` during provisio
 | `ERROR: PCA9685 not found` + red RGB + **hang** | Nothing ACK’d at `0x40` | PCA9685 **VCC=3V3** (not V+), GND, SDA/SCL, I2C address pads, +5V not required for the ACK but needed later for motion |
 | `ERROR: I2S initialization failed` + red RGB + **hang** | `I2S.begin` failed | GPIO2/3/4 not shorted to 5V/GND; pin constants; USB CDC still alive so you can read the line |
 | I2S OK but `POST /test/audio` is silent | Amp or speaker | MAX98357A **Vin**=USB 5V, GND, GP2/3/4 → BCLK/LRC/DIN, speaker on **SPK+ / SPK-** (not on the PNG, not GND) |
-| Servos silent / twitch / ESP32 resets during `POST /test/movement` | Power or SIG | **V+** is +5V, SIG on ch 0–4, **common GND**, supply current — see [power.md](power.md) |
+| Servos silent / twitch / ESP32 resets during `POST /test/movement` | Power or SIG | **V+** is +5V, SIG on ch 11–15, **common GND**, supply current — see [power.md](power.md) |
 | RGB never goes green | GPIO10 LED path | Board is C3-Zero (LED on GPIO10). Do not expect an external NeoPixel |
 
 OLED absence and Wi-Fi failure are **soft** fails. PCA9685 and I2S failures **halt** in `while (true)`.

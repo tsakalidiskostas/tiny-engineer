@@ -85,12 +85,12 @@ I2S **DIN** is not on J4 (ESP32 → amp only). **SERVO_5V** is the eFuse-protect
 
 | PCA9685 channel | Firmware | Mechanism |
 | --- | --- | --- |
-| 0 | `SERVO_HEAD` | Head pitch — [robot-movement.md](../robot-movement.md) |
-| 1 | `SERVO_NECK` | Neck yaw |
-| 2 | `SERVO_HAND_LEFT` | Left hand |
-| 3 | `SERVO_HAND_RIGHT` | Right hand |
-| 4 | `SERVO_BODY` | Body / torso |
-| 5–15 | unused | available |
+| 11 | `SERVO_HEAD` | Head pitch — [robot-movement.md](../robot-movement.md) |
+| 12 | `SERVO_NECK` | Neck yaw |
+| 13 | `SERVO_HAND_LEFT` | Left hand |
+| 14 | `SERVO_HAND_RIGHT` | Right hand |
+| 15 | `SERVO_BODY` | Body / torso |
+| 0–10 | unused | available |
 
 ## Other constants in `pins.h` (not pins)
 

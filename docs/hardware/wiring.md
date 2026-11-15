@@ -137,7 +137,7 @@ One generic **Servo** block:
 | 5V | V+ |
 | GND | GND |
 
-Firmware drives **channels 0–4** (`SERVO_SPECS` / `SERVO_HEAD`…`SERVO_BODY`). The drawing does not number the PWM header. Channel → joint: [robot-movement.md](../robot-movement.md) / [`include/servos.h`](../../include/servos.h).
+Firmware drives **channels 11–15** (`SERVO_SPECS` / `SERVO_CHANNEL_HEAD`…`SERVO_CHANNEL_BODY`). The drawing does not number the PWM header. Channel → joint: [robot-movement.md](../robot-movement.md) / [`include/servos.h`](../../include/servos.h).
 
 ## Pads drawn with no wires
 
@@ -156,7 +156,7 @@ Still part of the selected hardware; do not invent extra ESP32 GPIO for them.
 | Item | Rule |
 | --- | --- |
 | Speaker | Terminals → MAX98357A **SPK+** and **SPK-** only |
-| 4 extra analog micro servos | Same 3-wire pattern as the drawn servo, on PCA9685 PWM 0–4 |
+| 4 extra analog micro servos | Same 3-wire pattern as the drawn servo, on PCA9685 PWM 11–15 |
 | Adafruit 5993 D+/D− | Wire to ESP32 **GP19** / **GP18** for flash and CDC (single-USB design) |
 | PCA9685 OE | Wire ESP32 **GP5** → PCA9685 **OE** (active LOW) |
 | MAX98357A GAIN / SD | Not wired; leave breakout defaults |

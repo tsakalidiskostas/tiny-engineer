@@ -97,7 +97,7 @@ flowchart LR
   HTTP["POST /test/servo"]
   FW["Firmware angle clamp"]
   I2C["I2C to PCA9685 0x40"]
-  PWM["50 Hz PWM ch 0-4"]
+  PWM["50 Hz PWM ch 11-15"]
   SRV["analog micro servos"]
   HTTP --> FW --> I2C --> PWM --> SRV
 ```
@@ -105,7 +105,7 @@ flowchart LR
 1. You hit `/test/servo` or an animation (see [api.md](../api.md))
 2. Firmware clamps angle to `SERVO_SPECS` safe range for that joint
 3. I2C write to PCA9685 at address `0x40`
-4. Chip outputs 50 Hz PWM on channel 0–4
+4. Chip outputs 50 Hz PWM on channels 11–15
 5. Servo moves
 
 **Channel → joint mapping** (names only — angles in [robot-movement.md](../robot-movement.md)):

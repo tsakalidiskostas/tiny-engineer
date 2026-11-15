@@ -56,7 +56,7 @@ Constants cited below match [`include/pins.h`](../../include/pins.h).
 | Address | `0x40` (`PCA9685_ADDRESS` in firmware). A0–A5 pads can change this |
 | PWM | 12-bit, firmware `setPWMFreq(50)` |
 | Important pins | As drawn: **5V** (servo-rail in), **V+** (to servo 5V), **VCC** (3V3 logic), **GND**, **SDA**, **SCL**, **PWM**, **OE** (GP5, active LOW) |
-| Channels used | 0–4 (five servos). 5–15 unused |
+| Channels used | 11–15 (five servos). 0–10 unused |
 | Limits | **V+** and **VCC** must stay separate. Do not jumper servo power onto logic VCC on this robot |
 | Firmware note | Detection at `0x40` is a **hard fail** in the bring-up test |
 

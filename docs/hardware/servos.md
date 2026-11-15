@@ -9,7 +9,7 @@
 | Driver | Adafruit PCA9685, I2C `0x40` |
 | Servo supply | PCA9685 **V+** ← drawing: USB **5V** → PCA9685 **5V** (same servo rail as **V+**; not **VCC**) |
 | PWM frequency | **50 Hz** (`pwm.setPWMFreq(50)`) |
-| Channels | 0, 1, 2, 3, 4 (`SERVO_HEAD`…`SERVO_BODY` in `SERVO_SPECS`) |
+| Channels | 11, 12, 13, 14, 15 (`SERVO_CHANNEL_HEAD`…`SERVO_CHANNEL_BODY` in `SERVO_SPECS`) |
 
 > [!WARNING]
 > Never power the servos from the ESP32 3.3 V regulator.
@@ -66,7 +66,7 @@ Rapid flash/upload can still yank joints if the body drooped after PWM limp (sof
 
 ## Idle and sleep PWM release
 
-Analog servos hunt while a 50 Hz pulse is present. Firmware does **not** use OE for this: after animation `none` parks (awake rest or device-sleep chin-down) and every joint is still for `SERVO_PWM_RELEASE_DELAY_MS` (**2000** ms), it writes PCA9685 full-off (`setPWM(channel, 0, 4096)`) on channels 0–4. SIG stays low; the servo goes **limp** (no holding torque). Head pitch can droop; hands-down usually rests on the desk.
+Analog servos hunt while a 50 Hz pulse is present. Firmware does **not** use OE for this: after animation `none` parks (awake rest or device-sleep chin-down) and every joint is still for `SERVO_PWM_RELEASE_DELAY_MS` (**2000** ms), it writes PCA9685 full-off (`setPWM(channel, 0, 4096)`) on channels 11–15. SIG stays low; the servo goes **limp** (no holding torque). Head pitch can droop; hands-down usually rests on the desk.
 
 Skipped when `POST /servos/park` armed a until-reboot hold, or in setup AP.
 

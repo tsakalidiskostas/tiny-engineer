@@ -98,7 +98,7 @@ flowchart LR
   HTTP["POST /test/servo"]
   FW["Firmware angle clamp"]
   I2C["I2C to PCA9685 0x40"]
-  PWM["50 Hz PWM ch 0-4"]
+  PWM["50 Hz PWM ch 11-15"]
   SRV["analog micro servos"]
   HTTP --> FW --> I2C --> PWM --> SRV
 ```
