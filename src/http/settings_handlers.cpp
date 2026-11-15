@@ -49,6 +49,22 @@ bool readField(JsonVariantConst list, uint8_t (&out)[SETTINGS_SERVO_COUNT]) {
   return true;
 }
 
+bool readField(JsonVariantConst list, bool (&out)[SETTINGS_SERVO_COUNT]) {
+  if (!list.is<JsonArrayConst>() || list.size() != SETTINGS_SERVO_COUNT) {
+    return false;
+  }
+
+  for (size_t i = 0; i < SETTINGS_SERVO_COUNT; i++) {
+    if (!list[i].is<bool>()) {
+      return false;
+    }
+
+    out[i] = list[i].as<bool>();
+  }
+
+  return true;
+}
+
 // Fills the patch from the body. Returns the 400 message, or an empty string
 // when every field is known and has the right JSON type.
 String readPatch(JsonObjectConst body, SettingsPatch& patch) {
@@ -86,6 +102,9 @@ String readPatch(JsonObjectConst body, SettingsPatch& patch) {
   read("servo_mins", ranges.mins);
   read("servo_maxs", ranges.maxs);
 
+  bool reversed[SETTINGS_SERVO_COUNT] = {};
+  read("servo_reversed", reversed);
+
   for (const JsonPairConst field : body) {
     const auto isKnown = [&](const char* key) { return field.key() == key; };
 
@@ -106,6 +125,18 @@ String readPatch(JsonObjectConst body, SettingsPatch& patch) {
 
   if (hasMins) {
     patch.servoRanges = ranges;
+  }
+
+  if (!body["servo_reversed"].isUnbound()) {
+    uint8_t mask = 0;
+
+    for (size_t i = 0; i < SETTINGS_SERVO_COUNT; i++) {
+      if (reversed[i]) {
+        mask |= 1u << i;
+      }
+    }
+
+    patch.servoReversed = mask;
   }
 
   return "";
@@ -133,6 +164,12 @@ JsonDocument settingsJson() {
   for (size_t i = 0; i < SETTINGS_SERVO_COUNT; i++) {
     servoMins.add(static_cast<unsigned>(settingsServoMin(i)));
     servoMaxs.add(static_cast<unsigned>(settingsServoMax(i)));
+  }
+
+  JsonArray servoReversed = doc["servo_reversed"].to<JsonArray>();
+
+  for (size_t i = 0; i < SETTINGS_SERVO_COUNT; i++) {
+    servoReversed.add(settingsServoReversed(i));
   }
 
   doc["rgb_order"] = settingsRgbOrder();

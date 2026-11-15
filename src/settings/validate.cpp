@@ -142,6 +142,10 @@ bool settingsValidateRgbOrder(const char* rgbOrder) {
          strcmp(rgbOrder, "BGR") == 0;
 }
 
+bool settingsValidateServoReversed(uint8_t mask) {
+  return (mask & ~SETTINGS_SERVO_REVERSED_MASK) == 0;
+}
+
 const char* SettingsPatch::invalidField() const {
   if (sleepTimeoutMin && !settingsValidateSleepTimeout(*sleepTimeoutMin)) {
     return "sleep_timeout";
@@ -182,6 +186,10 @@ const char* SettingsPatch::invalidField() const {
 
   if (rgbOrder != nullptr && !settingsValidateRgbOrder(rgbOrder)) {
     return "rgb_order";
+  }
+
+  if (servoReversed && !settingsValidateServoReversed(*servoReversed)) {
+    return "servo_reversed";
   }
 
   return nullptr;

@@ -44,6 +44,7 @@ export interface Settings {
   wifi_configured: boolean;
   servo_mins: number[];
   servo_maxs: number[];
+  servo_reversed: boolean[];
   rgb_order: string;
   oled_rotate_180: boolean;
   wifi_networks: string[];

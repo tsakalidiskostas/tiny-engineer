@@ -59,6 +59,7 @@ export function Wizard({ settings }: { settings: Settings }) {
       {
         servo_mins: ranges.map(([min]) => min),
         servo_maxs: ranges.map(([, max]) => max),
+        servo_reversed: calibration.reversed,
       },
       "Saving servo ranges…",
     );

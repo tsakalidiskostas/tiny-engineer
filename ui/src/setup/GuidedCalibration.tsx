@@ -3,7 +3,7 @@ import { clamp } from "../lib/math";
 import { ConfigSection } from "../components/ConfigSection";
 import { ServoTrack } from "../components/ServoTrack";
 import { useStatus } from "../status/status";
-import type { Range } from "../servos";
+import { type Range, SERVO_NAMES } from "../servos";
 import { type Calibration, GUIDED_STEPS, mirrorMax, rangeMid } from "./useCalibration";
 import { useSetupServo } from "./useSetupServo";
 
@@ -11,14 +11,30 @@ const NUDGES = [-10, -5, -1, 1, 5, 10];
 
 const percent = (angle: number) => `${(angle / 180) * 100}%`;
 
-function startAngleFor(step: (typeof GUIDED_STEPS)[number], ranges: Range[]): number {
-  const [min, max] = ranges[step.joint];
+// Pose min/max sit at the electrical max/min when the joint is reversed.
+function electricalBound(step: (typeof GUIDED_STEPS)[number], reversed: boolean) {
+  const bound = step.kind === "min" ? "min" : step.bound;
 
-  if (step.kind === "hand" && step.bound === "max") {
+  if (bound === undefined || !reversed) {
+    return bound;
+  }
+
+  return bound === "min" ? "max" : "min";
+}
+
+function startAngleFor(
+  step: (typeof GUIDED_STEPS)[number],
+  ranges: Range[],
+  reversed: boolean,
+): number {
+  const [min, max] = ranges[step.joint];
+  const bound = step.kind === "center" ? undefined : electricalBound(step, reversed);
+
+  if (bound === "max") {
     return max;
   }
 
-  if (step.kind === "min" || (step.kind === "hand" && step.bound === "min")) {
+  if (bound === "min") {
     return min;
   }
 
@@ -52,10 +68,13 @@ export function GuidedCalibration({
   const { setStatus } = useStatus();
   const moveServos = useSetupServo();
   const { guidedStep, guidedIndex, guidedDrafts, angles, ranges, centers } = calibration;
+  const isReversed = (index: number) => calibration.reversed[index] ?? false;
   const joint = guidedStep.joint;
   const angle = angles[joint];
   const [min, max] = ranges[joint];
   const sessionCenter = centers[joint];
+  // Direction is set on a joint's first step, before any of its bounds are confirmed.
+  const firstStepOfJoint = GUIDED_STEPS.findIndex((step) => step.joint === joint) === guidedIndex;
 
   const withAngle = (value: number) =>
     angles.map((each, index) => (index === joint ? value : each));
@@ -73,6 +92,20 @@ export function GuidedCalibration({
     if (!(await moveServos({ index: joint, angle: next }))) {
       calibration.setAngles(withAngle(angle));
       calibration.setGuidedDraft(guidedIndex, angle);
+    }
+  }
+
+  async function setReversed(reversed: boolean) {
+    calibration.setJointReversed(joint, reversed);
+
+    // A hand step parks at a bound, which swaps ends with the direction.
+    if (guidedStep.kind === "hand") {
+      const start = startAngleFor(guidedStep, ranges, reversed);
+
+      if (await moveServos({ index: joint, angle: start })) {
+        calibration.setJointAngle(joint, start);
+        calibration.setGuidedDraft(guidedIndex, start);
+      }
     }
   }
 
@@ -94,7 +127,7 @@ export function GuidedCalibration({
 
   async function goToStep(index: number) {
     const step = GUIDED_STEPS[index];
-    const start = guidedDrafts[index] ?? startAngleFor(step, ranges);
+    const start = guidedDrafts[index] ?? startAngleFor(step, ranges, isReversed(step.joint));
 
     if (!(await moveServos({ index: step.joint, angle: start }))) {
       return false;
@@ -132,16 +165,22 @@ export function GuidedCalibration({
 
     if (guidedStep.kind === "min") {
       const center = sessionCenter ?? rangeMid(ranges[joint]);
+      const reversed = isReversed(joint);
 
-      if (angle >= center) {
-        setStatus("Min must be below the center so the mirrored max stays valid.", "err");
+      if (reversed ? angle <= center : angle >= center) {
+        setStatus(
+          reversed
+            ? "This joint is reversed: min must be above the center so the mirrored max stays valid."
+            : "Min must be below the center so the mirrored max stays valid.",
+          "err",
+        );
 
         return;
       }
 
-      const nextMax = mirrorMax(center, angle);
+      const mirrored = mirrorMax(center, angle);
 
-      if (nextMax > 180) {
+      if (mirrored > 180) {
         setStatus(
           "Mirrored max must not exceed 180°. Move the center lower or min closer to center.",
           "err",
@@ -150,9 +189,18 @@ export function GuidedCalibration({
         return;
       }
 
-      calibration.setJointRange(joint, [angle, nextMax]);
+      if (mirrored < 0) {
+        setStatus(
+          "Mirrored max must not go below 0°. Move the center higher or min closer to center.",
+          "err",
+        );
 
-      if (!(await demoMirroredRange(joint, nextMax, center))) {
+        return;
+      }
+
+      calibration.setJointRange(joint, reversed ? [mirrored, angle] : [angle, mirrored]);
+
+      if (!(await demoMirroredRange(joint, mirrored, center))) {
         return;
       }
 
@@ -161,7 +209,7 @@ export function GuidedCalibration({
       return;
     }
 
-    const bound = guidedStep.bound ?? "min";
+    const bound = electricalBound(guidedStep, isReversed(joint)) ?? "min";
     const nextRange: [number, number] = bound === "min" ? [angle, max] : [min, angle];
 
     if (nextRange[0] >= nextRange[1]) {
@@ -216,6 +264,23 @@ export function GuidedCalibration({
         ></div>
       </div>
       <p className="setup-copy">{guidedStep.copy}</p>
+      {firstStepOfJoint && (
+        <div className="form-group">
+          <div className="toggle-row">
+            <input
+              type="checkbox"
+              id="calib-reversed"
+              checked={isReversed(joint)}
+              onChange={(event) => void setReversed(event.currentTarget.checked)}
+            />
+            <label htmlFor="calib-reversed">{`${SERVO_NAMES[joint]} reversed`}</label>
+          </div>
+          <p className="hint">
+            Tick if this servo is mounted mirrored, so its minimum sits on the other side of the
+            center.
+          </p>
+        </div>
+      )}
       <div className="form-group">
         <div className="calib-angle-readout">
           <span data-testid="calib-angle">{angle}</span>°

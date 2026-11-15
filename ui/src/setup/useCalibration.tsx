@@ -190,6 +190,8 @@ export function useCalibration(settings: Settings) {
     SERVO_NAMES.map(() => undefined),
   );
   const [ranges, setRanges] = useResettableState(settings, savedRanges);
+  // Draft direction, saved with the ranges: a mid-wizard save would reset the drafts above.
+  const [reversed, setReversed] = useResettableState(settings, (each) => each.servo_reversed);
 
   const guidedStep = GUIDED_STEPS[guidedIndex] ?? GUIDED_STEPS[0];
 
@@ -253,7 +255,14 @@ export function useCalibration(settings: Settings) {
     setAngles((current) => current.map((each, index) => (index === joint ? angle : each)));
   }
 
+  function setJointReversed(joint: number, value: boolean) {
+    setReversed((current) => current.map((each, index) => (index === joint ? value : each)));
+  }
+
   return {
+    // Per-joint direction; a reversed joint reaches its pose min above center.
+    reversed,
+    setJointReversed,
     mode,
     setMode,
     goHub,

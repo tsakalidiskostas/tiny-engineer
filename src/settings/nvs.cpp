@@ -87,6 +87,14 @@ void SettingsValues::load() {
   if (g_settingsPrefs.isKey(kKeyOledRot)) {
     oledRotate180 = g_settingsPrefs.getBool(kKeyOledRot, oledRotate180);
   }
+
+  if (g_settingsPrefs.isKey(kKeyServoRev)) {
+    const uint32_t stored = g_settingsPrefs.getUInt(kKeyServoRev, servoReversed);
+
+    if (stored <= UINT8_MAX && settingsValidateServoReversed(stored)) {
+      servoReversed = static_cast<uint8_t>(stored);
+    }
+  }
 }
 
 namespace {
@@ -133,6 +141,7 @@ bool writeValues(const SettingsValues& values, const SettingsValues& before, boo
   putText(kKeyLinkMode, values.linkMode, before.linkMode);
   putText(kKeyRgbOrder, values.rgbOrder, before.rgbOrder);
   putBool(kKeyOledRot, values.oledRotate180, before.oledRotate180);
+  putUInt(kKeyServoRev, values.servoReversed, before.servoReversed);
 
   if (all || memcmp(&values.servoRanges, &before.servoRanges, sizeof(ServoRanges)) != 0) {
     uint8_t blob[kServoRangesLen];
@@ -218,6 +227,7 @@ bool factoryResetSettings() {
   next.servoRanges = g_settings.servoRanges;
   strlcpy(next.rgbOrder, g_settings.rgbOrder, sizeof(next.rgbOrder));
   next.oledRotate180 = g_settings.oledRotate180;
+  next.servoReversed = g_settings.servoReversed;
 
   if (!next.replaceAll()) {
     serialLogPrintln("Settings: factory reset failed");

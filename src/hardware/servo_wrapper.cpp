@@ -81,8 +81,9 @@ float servoNormToDeg(int index, float n) {
     return servoNormToDeg(n, 0.0f, 180.0f);
   }
 
+  // A reversed joint keeps its electrical min/max; only the pose direction flips.
   return servoNormToDeg(
-    n,
+    settingsServoReversed(index) ? -n : n,
     settingsServoMin(index),
     settingsServoMax(index)
   );
@@ -93,11 +94,12 @@ float servoDegToNorm(int index, float deg) {
     return servoDegToNorm(deg, 0.0f, 180.0f);
   }
 
-  return servoDegToNorm(
+  const float n = servoDegToNorm(
     deg,
     settingsServoMin(index),
     settingsServoMax(index)
   );
+  return settingsServoReversed(index) ? -n : n;
 }
 
 void initServoOutputPin() {

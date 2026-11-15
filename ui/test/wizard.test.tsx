@@ -72,6 +72,7 @@ describe("setup wizard", () => {
     expect(robot.lastPost("/settings")?.json).toEqual({
       servo_mins: [80, 80, 80, 80, 80],
       servo_maxs: [100, 100, 100, 100, 100],
+      servo_reversed: [false, false, false, false, false],
     });
     await waitFor(() => expect(robot.lastPost("/setup/oled")?.json).toEqual({ rotate_180: false }));
 
@@ -256,6 +257,69 @@ describe("setup wizard", () => {
     expect(screen.queryByRole("heading", { name: "Body · center" })).toBeNull();
   });
 
+  it("starts a reversed joint's min above center and rejects it at or below", async () => {
+    const { click } = await startGuided({ servo_reversed: [false, false, false, false, true] });
+
+    await click("Confirm center");
+    await waitFor(() => expect(angle()).toBe("100"));
+
+    await click("−10°");
+    await waitFor(() => expect(angle()).toBe("90"));
+    await click("Confirm min");
+
+    expect(statusText()).toBe(
+      "This joint is reversed: min must be above the center so the mirrored max stays valid.",
+    );
+    expect(screen.getByRole("heading", { name: "Body · minimum" })).toBeTruthy();
+  });
+
+  it("accepts a reversed joint's min above center and mirrors it below", async () => {
+    const { robot, click } = await startGuided({
+      servo_reversed: [false, false, false, false, true],
+    });
+
+    await click("Confirm center");
+    await waitFor(() => expect(angle()).toBe("100"));
+    await click("Confirm min");
+
+    await screen.findByRole("heading", { name: "Neck · center" });
+    expect(robot.sent("POST", "/setup/servo").map((request) => request.json)).toContainEqual({
+      index: 4,
+      angle: 80,
+    });
+  });
+
+  it("reverses a joint from its first step and saves the direction with the ranges", async () => {
+    const { robot, click, user } = await startGuided();
+
+    expect(robot.sent("POST", "/settings")).toEqual([]);
+    await user.click(screen.getByLabelText("Body reversed"));
+    expect(robot.sent("POST", "/settings")).toEqual([]);
+
+    await click("Confirm center");
+    await waitFor(() => expect(angle()).toBe("100"));
+    expect(screen.queryByLabelText("Body reversed")).toBeNull();
+    await click("Confirm min");
+
+    await screen.findByRole("heading", { name: "Neck · center" });
+    expect(screen.getByLabelText<HTMLInputElement>("Neck reversed").checked).toBe(false);
+  });
+
+  it("re-parks a hand step at the other bound when its direction flips", async () => {
+    const { robot, click, user } = await startGuided();
+
+    for (let joint = 0; joint < 3; joint++) {
+      await click("Confirm center");
+      await click("Confirm min");
+    }
+
+    await screen.findByRole("heading", { name: "Right hand · keyboard" });
+    await waitFor(() => expect(angle()).toBe("80"));
+    await user.click(screen.getByLabelText("Right hand reversed"));
+    await waitFor(() => expect(angle()).toBe("100"));
+    expect(robot.lastPost("/setup/servo")?.json).toEqual({ index: 3, angle: 100 });
+  });
+
   it("rejects a body min at or above the session center", async () => {
     const { click } = await startGuided();
 
@@ -411,9 +475,10 @@ describe("setup wizard", () => {
     expect(saved).toEqual({
       servo_mins: [60, 60, 45, 35, 60],
       servo_maxs: [120, 120, 135, 125, 120],
+      servo_reversed: [false, false, false, false, false],
     });
     expect(saved).not.toHaveProperty("servo_centers");
-    expect(Object.keys(saved)).toEqual(["servo_mins", "servo_maxs"]);
+    expect(Object.keys(saved)).toEqual(["servo_mins", "servo_maxs", "servo_reversed"]);
   });
 
   it("restores the setup screen when leaving the screen step", async () => {

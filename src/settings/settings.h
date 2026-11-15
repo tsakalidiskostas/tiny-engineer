@@ -36,6 +36,9 @@ constexpr uint8_t SETTINGS_SERVO_ANGLE_MAX = 180;
 constexpr size_t SETTINGS_RGB_ORDER_MAX_LEN = 3;
 constexpr const char* SETTINGS_DEFAULT_RGB_ORDER = "GRB";
 constexpr bool SETTINGS_DEFAULT_OLED_ROTATE_180 = false;
+// Bit i set = joint i turns the other way (servo mounted mirrored).
+constexpr uint8_t SETTINGS_DEFAULT_SERVO_REVERSED = 0;
+constexpr uint8_t SETTINGS_SERVO_REVERSED_MASK = (1u << SETTINGS_SERVO_COUNT) - 1;
 
 struct ServoRanges {
   uint8_t mins[SETTINGS_SERVO_COUNT];
@@ -60,6 +63,7 @@ struct SettingsPatch {
   std::optional<ServoRanges> servoRanges;
   const char* rgbOrder = nullptr;
   std::optional<bool> oledRotate180;
+  std::optional<uint8_t> servoReversed;
 
   // API name of the first field set to an invalid value, or nullptr.
   const char* invalidField() const;
@@ -98,6 +102,7 @@ const char* settingsLinkModePatchDenied(
 );
 float settingsServoMin(int index);
 float settingsServoMax(int index);
+bool settingsServoReversed(int index);
 const char* settingsRgbOrder();
 bool settingsOledRotate180();
 
@@ -115,6 +120,7 @@ bool settingsValidateAccessToken(const char* accessToken);
 bool settingsValidateWifiSsid(const char* wifiSsid);
 bool settingsValidateWifiPassword(const char* wifiPassword);
 bool settingsValidateRgbOrder(const char* rgbOrder);
+bool settingsValidateServoReversed(uint8_t mask);
 
 // Saves the fields the patch sets and keeps the others. False when a field is
 // invalid (nothing is written) or NVS fails.
@@ -124,5 +130,5 @@ bool saveSettings(const SettingsPatch& patch);
 bool saveWifiNetworks(const WifiNetworkList& networks);
 
 // Clears the NVS namespace and restores the defaults, WiFi networks included,
-// but keeps the servo min/max, RGB LED byte order and OLED 180° rotation.
+// but keeps the servo min/max and direction, RGB LED byte order and OLED 180° rotation.
 bool factoryResetSettings();

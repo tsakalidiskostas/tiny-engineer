@@ -189,6 +189,11 @@ void handleReq(uint16_t id, uint8_t ver, const uint8_t* payload, size_t payloadL
       servoMaxs.add(static_cast<unsigned>(settingsServoMax(i)));
     }
 
+    JsonArray servoReversed = body["servo_reversed"].to<JsonArray>();
+    for (size_t i = 0; i < SETTINGS_SERVO_COUNT; i++) {
+      servoReversed.add(settingsServoReversed(i));
+    }
+
     body["rgb_order"] = settingsRgbOrder();
     body["oled_rotate_180"] = settingsOledRotate180();
     body["reboot_required"] = settingsRebootRequired();

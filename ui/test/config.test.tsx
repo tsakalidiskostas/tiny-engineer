@@ -41,6 +41,7 @@ describe("config page", () => {
       continuous_timeout: 5,
       loading: "progress",
       eyes_style: "classic",
+      servo_reversed: [false, false, false, false, false],
     });
   });
 

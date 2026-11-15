@@ -20,6 +20,7 @@ constexpr const char* kKeyWifiNets = "wifi_nets";
 constexpr const char* kKeyServoRanges = "sranges";
 constexpr const char* kKeyRgbOrder = "rgb_ord";
 constexpr const char* kKeyOledRot = "oled_rot";
+constexpr const char* kKeyServoRev = "srev";
 constexpr const char* kKeyLinkMode = "link_mode";
 
 extern Preferences g_settingsPrefs;

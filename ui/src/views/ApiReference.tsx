@@ -174,6 +174,16 @@ export function ApiReference() {
           </tr>
           <tr>
             <td>
+              <code>servo_reversed</code>
+            </td>
+            <td>boolean array</td>
+            <td>
+              5 booleans; <code>true</code> flips that joint&rsquo;s pose direction; default all{" "}
+              <code>false</code>
+            </td>
+          </tr>
+          <tr>
+            <td>
               <code>rgb_order</code>
             </td>
             <td>string</td>

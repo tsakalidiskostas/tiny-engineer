@@ -83,6 +83,14 @@ float settingsServoMax(int index) {
   return static_cast<float>(g_settings.servoRanges.maxs[index]);
 }
 
+bool settingsServoReversed(int index) {
+  if (index < 0 || index >= static_cast<int>(SETTINGS_SERVO_COUNT)) {
+    return false;
+  }
+
+  return (g_settings.servoReversed >> index) & 1u;
+}
+
 const char* settingsRgbOrder() {
   return g_settings.rgbOrder;
 }

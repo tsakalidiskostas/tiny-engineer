@@ -161,6 +161,23 @@ void test_rgb_order() {
   TEST_ASSERT_FALSE(settingsValidateRgbOrder(nullptr));
 }
 
+void test_servo_reversed() {
+  TEST_ASSERT_TRUE(settingsValidateServoReversed(0));
+  TEST_ASSERT_TRUE(settingsValidateServoReversed(0x01));
+  TEST_ASSERT_TRUE(settingsValidateServoReversed(0x1F));
+  TEST_ASSERT_FALSE(settingsValidateServoReversed(0x20));
+  TEST_ASSERT_FALSE(settingsValidateServoReversed(0xFF));
+
+  SettingsPatch patch;
+  patch.servoReversed = 0x40;
+  TEST_ASSERT_EQUAL_STRING("servo_reversed", patch.invalidField());
+
+  // Direction is not a setup-wizard field; it saves outside setup AP mode.
+  patch.servoReversed = 0x01;
+  TEST_ASSERT_NULL(patch.invalidField());
+  TEST_ASSERT_NULL(patch.setupOnlyStep());
+}
+
 void test_link_mode() {
   TEST_ASSERT_TRUE(settingsValidateLinkMode(""));
   TEST_ASSERT_TRUE(settingsValidateLinkMode("wifi"));
@@ -211,6 +228,7 @@ int main() {
   RUN_TEST(test_patch_names_the_first_invalid_field);
   RUN_TEST(test_patch_names_its_setup_only_step);
   RUN_TEST(test_rgb_order);
+  RUN_TEST(test_servo_reversed);
   RUN_TEST(test_link_mode);
   RUN_TEST(test_link_mode_patch_rejects_empty);
   RUN_TEST(test_link_mode_patch_denied_outside_setup);

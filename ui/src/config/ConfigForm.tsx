@@ -7,6 +7,7 @@ import { ConfigSection } from "../components/ConfigSection";
 import { HostnameField } from "../components/HostnameField";
 import { clamp } from "../lib/math";
 import { useRobot } from "../robot";
+import { SERVO_NAMES } from "../servos";
 import { useStatus } from "../status/status";
 import { useResettableState } from "../useResettableState";
 import { AccessTokenField } from "./AccessTokenField";
@@ -29,6 +30,7 @@ function draftFrom(settings: Settings) {
     serialLog: settings.serial_log,
     loading: settings.loading,
     eyesStyle: settings.eyes_style,
+    servoReversed: settings.servo_reversed,
   };
 }
 
@@ -79,6 +81,7 @@ export function ConfigForm({ settings }: { settings: Settings }) {
           continuous_timeout: Number(draft.continuousTimeout),
           loading: draft.loading,
           eyes_style: draft.eyesStyle,
+          servo_reversed: draft.servoReversed,
           ...(newToken === undefined ? {} : { access_token: newToken }),
         },
       },
@@ -199,6 +202,34 @@ export function ConfigForm({ settings }: { settings: Settings }) {
             animations change height with black margins. Dots draws a 12x12 circle per eye; size and
             position follow the same poses as classic. Add new styles in firmware under{" "}
             <code>display/eyes/styles/</code>.
+          </p>
+        </div>
+      </ConfigSection>
+      <ConfigSection title="Servos" apply="now">
+        <div className="form-group">
+          <span>Reversed direction</span>
+          {SERVO_NAMES.map((name, index) => (
+            <div className="toggle-row" key={name}>
+              <input
+                type="checkbox"
+                id={`config-servo-reversed-${index}`}
+                checked={draft.servoReversed[index] ?? false}
+                onChange={(event) => {
+                  const { checked } = event.currentTarget;
+
+                  set({
+                    servoReversed: draft.servoReversed.map((each, i) =>
+                      i === index ? checked : each,
+                    ),
+                  });
+                }}
+              />
+              <label htmlFor={`config-servo-reversed-${index}`}>{name}</label>
+            </div>
+          ))}
+          <p className="hint">
+            For a servo mounted mirrored. Keeps the calibrated range and flips which end each pose
+            uses. Servo calibration in the setup wizard offers the same toggle per joint.
           </p>
         </div>
       </ConfigSection>
