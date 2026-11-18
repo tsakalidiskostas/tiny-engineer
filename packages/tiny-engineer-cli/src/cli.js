@@ -237,9 +237,10 @@ async function runPlay(out, argv, quietGlobal) {
 
   const pose = opts.name ?? "talking";
   // The muted robot still animates from the streamed PCM; the sound comes from here.
-  if (getAudioOutput() === "computer") {
-    void playOnComputer(/** @type {string} */ (opts.wavPath));
-  }
+  const local =
+    getAudioOutput() === "computer"
+      ? playOnComputer(/** @type {string} */ (opts.wavPath))
+      : Promise.resolve(false);
   const result = await robotPlay({
     wav,
     name: opts.name,
@@ -247,6 +248,7 @@ async function runPlay(out, argv, quietGlobal) {
     transport: opts.transport,
     port: opts.port,
   });
+  await local;
   if (!result.ok) {
     localOut.error(formatRobotError(result));
     process.exitCode = 1;

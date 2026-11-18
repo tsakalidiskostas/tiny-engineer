@@ -95,35 +95,24 @@ export function playerCommand(wavPath, platform = process.platform) {
 }
 
 /**
- * Play a WAV on the computer. Detached so a hook can exit while it plays.
- * Never throws: a missing player only loses the sound.
+ * Play a WAV on the computer and resolve when it ends. Callers must wait:
+ * hook runners (and Windows job objects) kill the player when the CLI exits,
+ * even a detached one. Never throws: a missing player only loses the sound.
  * @param {string} wavPath
- * @param {{ wait?: boolean }} [opts] wait=true resolves when playback ends
- * @returns {Promise<boolean>} false when the player could not start
+ * @returns {Promise<boolean>} false when the player failed
  */
-export function playOnComputer(wavPath, { wait = false } = {}) {
+export function playOnComputer(wavPath) {
   const { command, args } = playerCommand(wavPath);
   return new Promise((resolvePlay) => {
     let child;
     try {
-      child = spawn(command, args, {
-        detached: !wait,
-        stdio: "ignore",
-        windowsHide: true,
-      });
+      child = spawn(command, args, { stdio: "ignore", windowsHide: true });
     } catch {
       resolvePlay(false);
       return;
     }
     child.on("error", () => resolvePlay(false));
-    if (wait) {
-      child.on("close", (code) => resolvePlay(code === 0));
-      return;
-    }
-    child.on("spawn", () => {
-      child.unref();
-      resolvePlay(true);
-    });
+    child.on("close", (code) => resolvePlay(code === 0));
   });
 }
 
@@ -131,7 +120,7 @@ export function playOnComputer(wavPath, { wait = false } = {}) {
  * When audio goes to the computer, play the clip that `anim` would play on
  * the robot. No-op for animations without a clip or in robot mode.
  * @param {string} anim
- * @returns {Promise<boolean>} true when a clip started on the computer
+ * @returns {Promise<boolean>} true when a clip played on the computer
  */
 export async function playAnimClipOnComputer(anim) {
   if (getAudioOutput() !== "computer") return false;
