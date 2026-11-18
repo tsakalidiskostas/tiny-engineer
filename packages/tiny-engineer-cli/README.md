@@ -17,6 +17,10 @@ Supported IDEs: **Cursor**, **Claude Code**, **Antigravity**.
 
 Connection prefs (transport, URL, port, token) live in **user config** (`~/.config/tiny-engineer/env`; Windows `%APPDATA%\tiny-engineer\env`). Project `.env` overrides when present. A user/process `TINY_ENGINEER_TOKEN` is **not** sent as `Authorization: Bearer` when the URL came only from project `.env` (request continues without Bearer; stderr warns). Details: [integration guide](https://github.com/jamro/tiny-engineer/blob/main/docs/integration.md).
 
+## Sound output
+
+`tiny-engineer audio computer` plays the sound messages (welcome, bell, attention, error, abort, dead, hello_family, and `play` clips) on this computer's default output, e.g. headphones. The robot keeps animating with its volume at 0. `tiny-engineer audio robot` restores the saved volume and plays on the robot again. `tiny-engineer audio` prints the current choice, stored as `TINY_ENGINEER_AUDIO` in user config. Clips come from `TINY_ENGINEER_CLIPS`, else the repo's `data/` (with any `custom_audio_mod` overlay), else `assets/`. Players: PowerShell on Windows, `afplay` on macOS, `aplay` on Linux.
+
 ## Docs
 
 - [Integration guide](https://github.com/jamro/tiny-engineer/blob/main/docs/integration.md) (`setup` / hooks)

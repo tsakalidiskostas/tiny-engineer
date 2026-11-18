@@ -11,6 +11,8 @@ import {
   runSettings,
   runTest,
 } from "./commands/parity.js";
+import { getAudioOutput, playAnimClipOnComputer, playOnComputer } from "./audio/local.js";
+import { runAudio } from "./commands/audio.js";
 import { runMonitor } from "./commands/monitor.js";
 import { get as getIntegration, list as listIntegrations } from "./integrations/registry.js";
 import { validateAnimName, validatePlayAnimName } from "./robot/client.js";
@@ -46,6 +48,7 @@ Commands:
   anim <name>             Set animation pose
   play <clip.wav> [opts]  Stream WAV play (HTTP or serial credits)
   settings [get|set]      Read or write settings
+  audio [robot|computer]  Play sound messages on the robot or this computer
   test <name>             Run hardware test (audio|bell|screen|movement|led)
   servo <index> <angle>   Move one servo (degrees)
   park                    Center servos and hold PWM (flash-safe)
@@ -137,6 +140,7 @@ async function runHook(out, argv, quietGlobal) {
   if (anim) {
     // Fail-open: ignore result so an offline robot never stalls the agent.
     await robotSetAnim(anim, { url: opts.url, transport: opts.transport, port: opts.port });
+    await playAnimClipOnComputer(anim);
   }
 
   const fileLines = integration.describeFiles?.(input, localOut.style) ?? [];
@@ -192,6 +196,7 @@ async function runAnim(out, argv, quietGlobal) {
     process.exitCode = 1;
     return;
   }
+  await playAnimClipOnComputer(name);
   localOut.ok(`animation ${name} → ${localOut.style.dim(result.target ?? "robot")}`);
   process.exitCode = 0;
 }
@@ -231,6 +236,10 @@ async function runPlay(out, argv, quietGlobal) {
   }
 
   const pose = opts.name ?? "talking";
+  // The muted robot still animates from the streamed PCM; the sound comes from here.
+  if (getAudioOutput() === "computer") {
+    void playOnComputer(/** @type {string} */ (opts.wavPath));
+  }
   const result = await robotPlay({
     wav,
     name: opts.name,
@@ -294,6 +303,9 @@ export async function run(argv) {
       return;
     case "settings":
       await runSettings(out, rest, global.quiet);
+      return;
+    case "audio":
+      await runAudio(out, rest);
       return;
     case "test":
       await runTest(out, rest, global.quiet);
