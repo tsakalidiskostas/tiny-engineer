@@ -11,7 +11,8 @@ The ESP32 board in this build has no RGB LED, so there is no colour status to sh
 | Body | `NewOrientationBody` (rebuilt body that houses the servo) |
 | Chair | `chairForPowerbank` (chair with room for the power bank), `Overchair` (sits over the chair and holds the body in place; grips the horn instead of the servo, to match the new body) |
 | Neck | `Neck` |
-| Servo fit | `robotAdaptor` (adaptors from the SG90's round horn hubs to the model's hexagonal sockets), `servoSleeve`, `motorPlaceholders` |
+| Servo fit | `robotAdaptor` (adaptors from the SG90's round horn hubs to the model's hexagonal sockets), `servoSleeve` (sleeve so an SG90 fits snugly in a pocket designed for the original servos) |
+| Design aid | `motorPlaceholders` (a model of the SG90, not printed; import it as a reference when you modify the parts) |
 | Power | `powerInputSupport` (support for the power input) |
 | Desk props | `headsetCollection` (headset, small headset holder and a mobile phone; replaces the lamp) |
 
