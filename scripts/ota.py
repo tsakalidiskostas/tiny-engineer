@@ -6,6 +6,9 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 DEFAULT_HOST = "tiny-engineer.local"
+# The robot connects back to this port on the host to fetch the image. A
+# fixed port lets one firewall rule allow it (see docs/flash.md).
+HOST_PORT = "3233"
 
 
 def ota_host():
@@ -20,6 +23,7 @@ def espota(image, filesystem):
         env.subst("$PYTHONEXE"),
         str(Path(env.PioPlatform().get_package_dir("framework-arduinoespressif32")) / "tools" / "espota.py"),
         "--ip", ota_host(),
+        "--host_port", HOST_PORT,
         "--file", str(image),
         "--progress",
     ]

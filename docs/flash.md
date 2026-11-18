@@ -133,7 +133,7 @@ pio run -e ota -t ota       # firmware
 pio run -e ota -t otafs     # LittleFS (WAV assets)
 ```
 
-These are the same variables the agent integrations read ([integration.md](integration.md)). OTA listens on UDP/TCP port 3232 and only runs while connected to home Wi-Fi, not in setup AP mode. When `access_token` is set it is also the OTA password; changing it applies to OTA without a reboot.
+These are the same variables the agent integrations read ([integration.md](integration.md)). OTA listens on UDP/TCP port 3232 and only runs while connected to home Wi-Fi, not in setup AP mode. The robot then connects back to the host on TCP port 3233 to fetch the image, so a host firewall must allow that inbound port; on Windows (as admin): `New-NetFirewallRule -DisplayName "Tiny Engineer OTA (TCP 3233)" -Direction Inbound -Protocol TCP -LocalPort 3233 -RemoteAddress LocalSubnet -Action Allow`. Without it the upload stops at `No response from device`. When `access_token` is set it is also the OTA password; changing it applies to OTA without a reboot.
 
 An update is written to the inactive slot and booted once; it becomes permanent only after it connects to Wi-Fi and starts its OTA listener. Firmware that never gets that far is rolled back to the previous slot on the next reset or power cycle. A firmware that hangs needs that power cycle to recover.
 
