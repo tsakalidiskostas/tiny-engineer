@@ -18,6 +18,8 @@ constexpr uint16_t kPca9685FullOff = 4096;
 constexpr const char* kPoseNs = "te";
 constexpr const char* kPoseKey = "spose";
 constexpr uint32_t kPoseSaveDebounceMs = 500;
+// Longest interval one smooth-move step may cover.
+constexpr uint32_t kMaxStepMs = 100;
 
 static bool g_allOutputsReleased = false;
 static bool g_parkHoldUntilReboot = false;
@@ -303,9 +305,6 @@ void ServoWrapper::setPosition(float angle) {
 }
 
 void ServoWrapper::setNormTarget(float n, float speedDegS) {
-  if (index_ == SERVO_NECK) {
-    n *= NECK_MOTION_SCALE;
-  }
   setTarget(servoNormToDeg(index_, n), speedDegS);
 }
 
@@ -318,12 +317,15 @@ void ServoWrapper::setNormPosition(float n) {
   // Animations set positions every frame; slew the neck toward them instead
   // of jumping. Stepping here keeps it moving in animations that never call
   // update() on the neck; any later update() finishes the move.
-  setTarget(servoNormToDeg(index_, n * NECK_MOTION_SCALE), NECK_MAX_SPEED_DEG_S);
+  setTarget(servoNormToDeg(index_, n), NECK_MAX_SPEED_DEG_S);
   update();
 }
 
 void ServoWrapper::stop() {
   target_ = angle_;
+  // Otherwise the next move measures its first step from this stale time
+  // and jumps straight to its target.
+  lastUpdateMs_ = 0;
 }
 
 bool ServoWrapper::isMoving() const {
@@ -350,8 +352,11 @@ void ServoWrapper::update() {
 
   lastUpdateMs_ = now;
 
+  // A late update (blocking audio, a stale timestamp) slows the move
+  // instead of turning it into one jump.
+  const uint32_t stepMs = elapsed < kMaxStepMs ? elapsed : kMaxStepMs;
   const float maxStep =
-    speedDegS_ * ((float)elapsed / 1000.0f);
+    speedDegS_ * ((float)stepMs / 1000.0f);
   const float delta = target_ - angle_;
   const float step =
     constrain(delta, -maxStep, maxStep);

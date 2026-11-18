@@ -68,11 +68,9 @@ inline float servoDegToNorm(float deg, float savedMin, float savedMax) {
 // Max commanded slew rate for all smooth moves
 constexpr float SERVO_MAX_SPEED_DEG_S = 140.0f;
 
-// The neck servo oscillates under the head's load on fast or large moves.
-// Animation neck moves are capped to this speed and their swing around mid
-// is scaled down. Calibration and boot moves are not affected.
+// The neck servo oscillates under the head's load on fast moves. Animation
+// neck moves are capped to this speed. Calibration and boot moves are not.
 constexpr float NECK_MAX_SPEED_DEG_S = 50.0f;
-constexpr float NECK_MOTION_SCALE = 0.6f;
 
 // Setup-wizard calibration moves (horn 90° and per-joint sweeps)
 constexpr float SERVO_CALIB_SPEED_DEG_S = 25.0f;
