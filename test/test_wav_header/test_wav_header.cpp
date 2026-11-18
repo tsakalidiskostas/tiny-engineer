@@ -101,6 +101,17 @@ void test_rate_mismatch_rejected() {
   TEST_ASSERT_EQUAL(WavHeaderResult::SampleRateMismatch, parse(wav));
 }
 
+void test_any_rate_reports_file_rate() {
+  std::vector<uint8_t> wav = riffWave();
+  putChunk(wav, "fmt ", fmtBody(1, 1, 16000, 16));
+  putChunk(wav, "data", kPcm);
+
+  BufferReader reader{wav};
+  uint32_t rate = 0;
+  TEST_ASSERT_EQUAL(WavHeaderResult::Ok, readWavHeader(reader, 0, &rate));
+  TEST_ASSERT_EQUAL_UINT32(16000, rate);
+}
+
 void test_format_mismatches_rejected() {
   std::vector<uint8_t> stereo = riffWave();
   putChunk(stereo, "fmt ", fmtBody(1, 2, kRate, 16));
@@ -160,6 +171,7 @@ int main() {
   UNITY_BEGIN();
   RUN_TEST(test_valid_header_stops_at_pcm);
   RUN_TEST(test_rate_mismatch_rejected);
+  RUN_TEST(test_any_rate_reports_file_rate);
   RUN_TEST(test_format_mismatches_rejected);
   RUN_TEST(test_odd_and_extended_chunks_skipped);
   RUN_TEST(test_data_before_fmt_rejected);

@@ -9,6 +9,8 @@ from pathlib import Path
 
 SOURCE_RATE = 44100
 PACKED_RATE = SOURCE_RATE // 2
+# Firmware upsamples clips below PACKED_RATE; it accepts down to 8000 Hz.
+MIN_PACKED_RATE = 8000
 
 STOCK_WAVS = (
     "bell.wav",
@@ -231,6 +233,53 @@ def validate_cue(clip, values, duration_ms, label):
         )
 
 
+def resample(path, rate, half_width=16):
+    """Low-pass and resample a SOURCE_RATE WAV to `rate`, rewriting it in place.
+
+    Blackman-windowed sinc with its cutoff just under the output Nyquist.
+    Output positions repeat every `rate / gcd` samples, so the kernel is
+    computed once per phase and reused.
+    """
+    with wave.open(str(path), "rb") as wav:
+        _require_source_format(wav, path)
+        samples = array("h", wav.readframes(wav.getnframes()))
+
+    common = math.gcd(SOURCE_RATE, rate)
+    up, down = rate // common, SOURCE_RATE // common
+    cutoff = 0.95 * rate / SOURCE_RATE  # cycles per source sample, x2
+    reach = int(math.ceil(half_width / cutoff))
+
+    def tap(offset):
+        x = offset * cutoff
+        sinc = 1.0 if x == 0 else math.sin(math.pi * x) / (math.pi * x)
+        n = offset / reach
+        window = 0.42 + 0.5 * math.cos(math.pi * n) + 0.08 * math.cos(2 * math.pi * n)
+        return cutoff * sinc * window if abs(n) < 1 else 0.0
+
+    # kernels[p][i] weights source sample (base - reach + 1 + i) for phase p/up.
+    kernels = []
+    for phase in range(up):
+        frac = phase / up
+        taps = [tap(k - frac) for k in range(-reach + 1, reach + 1)]
+        total = sum(taps)
+        kernels.append([value / total for value in taps])
+
+    padded = [0] * reach + samples.tolist() + [0] * (reach + 1)
+    count = len(samples) * up // down
+    out = array("h")
+    for n in range(count):
+        base, phase = divmod(n * down, up)
+        window = padded[base + 1:base + 1 + 2 * reach]
+        value = sum(weight * sample for weight, sample in zip(kernels[phase], window))
+        out.append(max(-32768, min(32767, round(value))))
+
+    with wave.open(str(path), "wb") as wav:
+        wav.setnchannels(1)
+        wav.setsampwidth(2)
+        wav.setframerate(rate)
+        wav.writeframes(out.tobytes())
+
+
 def spiffs_size_bytes(partitions_csv):
     path = Path(partitions_csv)
     for raw in path.read_text().splitlines():
@@ -251,7 +300,7 @@ def _managed_names():
     return names
 
 
-def pack_audio(assets_dir, dest_dir, partition_bytes, mod_dir=None):
+def pack_audio(assets_dir, dest_dir, partition_bytes, mod_dir=None, packed_rate=PACKED_RATE):
     assets_dir = Path(assets_dir)
     dest_dir = Path(dest_dir)
     dest_dir.mkdir(parents=True, exist_ok=True)
@@ -277,10 +326,17 @@ def pack_audio(assets_dir, dest_dir, partition_bytes, mod_dir=None):
     if mod_dir is not None:
         _overlay_mod(Path(mod_dir), dest_dir)
 
+    if not MIN_PACKED_RATE <= packed_rate <= PACKED_RATE:
+        raise AudioPackError(
+            f"Audio rate {packed_rate} Hz must be {MIN_PACKED_RATE}-{PACKED_RATE} Hz"
+        )
     for name in STOCK_WAVS + OPTIONAL_WAVS:
         if (dest_dir / name).is_file():
-            halve_sample_rate(dest_dir / name)
-    print(f"Resampled WAVs to {PACKED_RATE} Hz")
+            if packed_rate == PACKED_RATE:
+                halve_sample_rate(dest_dir / name)
+            else:
+                resample(dest_dir / name, packed_rate)
+    print(f"Resampled WAVs to {packed_rate} Hz")
 
     total = sum(
         path.stat().st_size

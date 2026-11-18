@@ -116,6 +116,7 @@ The `ota` build environment adds Wi-Fi updates. Compared with the default build 
 
 - the coredump partition, for a second firmware slot ([`partitions_ota.csv`](../partitions_ota.csv))
 - LittleFS shrinks from about 1.81 MB to 960 KB, so there is less room for longer mod clips
+- clips are packed at 16000 Hz instead of 22050 Hz (`custom_audio_rate`), about 27% smaller; the firmware upsamples them while playing. `POST /play` still takes 22050 Hz
 
 Switching layouts needs one USB flash of firmware and filesystem together:
 

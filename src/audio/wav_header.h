@@ -51,8 +51,13 @@ inline uint32_t le32(const uint8_t* bytes) {
 
 // Reader needs `bool read(uint8_t* dest, size_t len)` (all bytes or false) and
 // `bool skip(uint32_t len)`. On Ok the reader sits at the first PCM byte.
+// sampleRate 0 accepts any rate; rateOut, when given, receives the file's rate.
 template <typename Reader>
-WavHeaderResult readWavHeader(Reader& reader, uint32_t sampleRate) {
+WavHeaderResult readWavHeader(
+  Reader& reader,
+  uint32_t sampleRate,
+  uint32_t* rateOut = nullptr
+) {
   using wav_header_detail::le16;
   using wav_header_detail::le32;
 
@@ -102,8 +107,12 @@ WavHeaderResult readWavHeader(Reader& reader, uint32_t sampleRate) {
       return WavHeaderResult::Not16Bit;
     }
 
-    if (le32(fmt + 4) != sampleRate) {
+    if (sampleRate != 0 && le32(fmt + 4) != sampleRate) {
       return WavHeaderResult::SampleRateMismatch;
+    }
+
+    if (rateOut != nullptr) {
+      *rateOut = le32(fmt + 4);
     }
 
     if (!reader.skip(chunkSize - sizeof(fmt) + padding)) {

@@ -19,7 +19,7 @@ mods/<mod_name>/
 
 ## Audio
 
-Optional speaker replacements live in `mods/<mod_name>/assets/`. Format matches stock: **44100 Hz, mono, 16-bit PCM**; the build downsamples to 22050 Hz. Firmware still plays `/welcome.wav` and the other root names. The build overlay copies stock [`assets/`](../assets/) first, then overwrites any basename the mod ships. A missing file stays the stock clip.
+Optional speaker replacements live in `mods/<mod_name>/assets/`. Format matches stock: **44100 Hz, mono, 16-bit PCM**; the build downsamples to 22050 Hz (16000 Hz in the `ota` build). Firmware still plays `/welcome.wav` and the other root names. The build overlay copies stock [`assets/`](../assets/) first, then overwrites any basename the mod ships. A missing file stays the stock clip.
 
 Stock image (no mod): **[Web flash](https://jamro.github.io/tiny-engineer/flash/)**. Audio mods need PlatformIO: set `custom_audio_mod = halloween` in [`platformio.ini`](../platformio.ini), then `pio run -t upload`. Empty option keeps stock. Details: [docs/flash.md](../docs/flash.md) (Advanced: PlatformIO).
 

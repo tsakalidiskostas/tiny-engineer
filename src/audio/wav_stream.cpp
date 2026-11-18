@@ -31,9 +31,28 @@ constexpr WavClipDef kClips[kWavClipCount] = {
   {"/hello_family.wav", "Hello family", "HELLO FAMILY"},
 };
 
+// Lowest clip rate accepted; clips below SAMPLE_RATE are upsampled on the fly.
+constexpr uint32_t kMinClipRate = 8000;
+
 File g_file;
 bool g_playing = false;
 WavClip g_active = WavClip::Bell;
+
+// Linear-interpolation upsampler state. Phase is the position between
+// prev and next in 1/65536ths of a source sample.
+struct Upsampler {
+  int16_t in[kAudioFrames];
+  size_t inLen;
+  size_t inPos;
+  int16_t prev;
+  int16_t next;
+  uint32_t phase;
+  uint32_t step;
+  bool primed;
+};
+
+bool g_upsample = false;
+Upsampler g_up;
 
 void logAudioStorageContents() {
   File root = LittleFS.open("/");
@@ -87,6 +106,64 @@ bool pumpWavChunk(File& file) {
   return file.available() > 0;
 }
 
+bool nextSourceSample(File& file, int16_t& sample) {
+  if (g_up.inPos >= g_up.inLen) {
+    const size_t bytesRead =
+      file.read(reinterpret_cast<uint8_t*>(g_up.in), sizeof(g_up.in));
+    g_up.inLen = bytesRead / 2;
+    g_up.inPos = 0;
+
+    if (g_up.inLen == 0) {
+      return false;
+    }
+  }
+
+  sample = g_up.in[g_up.inPos++];
+  return true;
+}
+
+bool pumpUpsampledChunk(File& file) {
+  if (!g_up.primed) {
+    if (!nextSourceSample(file, g_up.prev)) {
+      return false;
+    }
+    if (!nextSourceSample(file, g_up.next)) {
+      g_up.next = g_up.prev;
+    }
+    g_up.primed = true;
+  }
+
+  int16_t out[kAudioFrames];
+  size_t count = 0;
+  bool more = true;
+
+  while (count < kAudioFrames) {
+    const int32_t delta = static_cast<int32_t>(g_up.next) - g_up.prev;
+    out[count++] = static_cast<int16_t>(
+      g_up.prev + static_cast<int32_t>((static_cast<int64_t>(delta) * g_up.phase) >> 16)
+    );
+
+    g_up.phase += g_up.step;
+
+    while (g_up.phase >= 0x10000) {
+      g_up.phase -= 0x10000;
+      g_up.prev = g_up.next;
+
+      if (!nextSourceSample(file, g_up.next)) {
+        more = false;
+        break;
+      }
+    }
+
+    if (!more) {
+      break;
+    }
+  }
+
+  writeMonoToSpeaker(out, count);
+  return more;
+}
+
 const WavClipDef& clipDef(WavClip clip) {
   return kClips[static_cast<uint8_t>(clip)];
 }
@@ -124,7 +201,13 @@ bool wavStreamStart(WavClip clip) {
   }
 
   WavFileReader reader{g_file};
-  const WavHeaderResult header = readWavHeader(reader, SAMPLE_RATE);
+  uint32_t rate = 0;
+  WavHeaderResult header = readWavHeader(reader, 0, &rate);
+
+  if (header == WavHeaderResult::Ok &&
+      (rate < kMinClipRate || rate > static_cast<uint32_t>(SAMPLE_RATE))) {
+    header = WavHeaderResult::SampleRateMismatch;
+  }
 
   if (header != WavHeaderResult::Ok) {
     g_file.close();
@@ -133,6 +216,14 @@ bool wavStreamStart(WavClip clip) {
     serialLogPrint(wavHeaderResultText(header));
     serialLogPrintln(")");
     return false;
+  }
+
+  g_upsample = rate != static_cast<uint32_t>(SAMPLE_RATE);
+  if (g_upsample) {
+    g_up = {};
+    g_up.step = static_cast<uint32_t>(
+      (static_cast<uint64_t>(rate) << 16) / static_cast<uint32_t>(SAMPLE_RATE)
+    );
   }
 
   g_active = clip;
@@ -149,7 +240,10 @@ bool wavStreamUpdate() {
 
   const WavClipDef& def = clipDef(g_active);
 
-  if (!pumpWavChunk(g_file)) {
+  const bool more =
+    g_upsample ? pumpUpsampledChunk(g_file) : pumpWavChunk(g_file);
+
+  if (!more) {
     if (g_file) {
       g_file.close();
     }

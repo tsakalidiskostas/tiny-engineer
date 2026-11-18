@@ -65,6 +65,19 @@ class AudioPackTests(unittest.TestCase):
         source_frames, _ = frames_and_rate(source)
         self.assertEqual(frames_and_rate(packed), (source_frames // 2, 22050))
 
+    def test_lower_rate_packs_every_clip_at_that_rate(self):
+        pack_audio(self.assets, self.dest, 2_000_000, packed_rate=16000)
+        for name in STOCK_WAVS:
+            source_frames, _ = frames_and_rate(self.assets / name)
+            self.assertEqual(
+                frames_and_rate(self.dest / name),
+                (source_frames * 16000 // 44100, 16000),
+            )
+
+    def test_rate_outside_firmware_range_rejected(self):
+        with self.assertRaises(AudioPackError):
+            pack_audio(self.assets, self.dest, 2_000_000, packed_rate=44100)
+
     def test_stock_rebuild_drops_old_cue(self):
         (self.dest / "welcome.cue").write_text("end_ms=1\n")
         pack_audio(self.assets, self.dest, 2_000_000)
