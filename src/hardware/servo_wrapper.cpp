@@ -291,7 +291,7 @@ void ServoWrapper::setTarget(float target, float speedDegS) {
   speedDegS_ = constrain(
     speedDegS,
     0.0f,
-    SERVO_MAX_SPEED_DEG_S
+    index_ == SERVO_NECK ? NECK_MAX_SPEED_DEG_S : SERVO_MAX_SPEED_DEG_S
   );
 }
 
@@ -303,11 +303,23 @@ void ServoWrapper::setPosition(float angle) {
 }
 
 void ServoWrapper::setNormTarget(float n, float speedDegS) {
+  if (index_ == SERVO_NECK) {
+    n *= NECK_MOTION_SCALE;
+  }
   setTarget(servoNormToDeg(index_, n), speedDegS);
 }
 
 void ServoWrapper::setNormPosition(float n) {
-  setPosition(servoNormToDeg(index_, n));
+  if (index_ != SERVO_NECK) {
+    setPosition(servoNormToDeg(index_, n));
+    return;
+  }
+
+  // Animations set positions every frame; slew the neck toward them instead
+  // of jumping. Stepping here keeps it moving in animations that never call
+  // update() on the neck; any later update() finishes the move.
+  setTarget(servoNormToDeg(index_, n * NECK_MOTION_SCALE), NECK_MAX_SPEED_DEG_S);
+  update();
 }
 
 void ServoWrapper::stop() {
